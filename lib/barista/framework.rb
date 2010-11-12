@@ -2,7 +2,7 @@ module Barista
   class Framework
 
     def self.default_framework
-      @default_framework ||= self.new("default", Barista.root)
+      @default_framework ||= self.new("default", :root => Barista.root, :output_root => Barista.output_root)
     end
 
     def self.default_framework=(value)
@@ -30,8 +30,8 @@ module Barista
       nil
     end
 
-    def self.register(name, root)
-      (@all ||= []) << self.new(name, root)
+    def self.register(name, options)
+      (@all ||= []) << self.new(name, options)
     end
 
     def self.[](name)
@@ -39,12 +39,13 @@ module Barista
       (@all ||= []).detect { |fw| fw.name == name }
     end
 
-    attr_reader :name, :framework_root, :output_prefix
+    attr_reader :name, :framework_root, :output_prefix, :output_root
 
-    def initialize(name, root, output_prefix = nil)
+    def initialize(name, options)
       @name           = name.to_s
-      @output_prefix  = nil
-      @framework_root = File.expand_path(root)
+      @output_prefix  = options[:output_prefix]
+      @framework_root = File.expand_path(options[:root])
+      @output_root = File.expand_path(options[:output_root]) if options[:output_root]
     end
 
     def coffeescripts
@@ -70,6 +71,10 @@ module Barista
       File.exist?(full_path) ? full_path : nil
     end
 
+    def output_path_for(file)
+      File.join(output_root, file.to_s.gsub(/^\/+/, '')).to_s.gsub(/\.coffee$/, '.js')
+    end
+    
     protected
 
     def remove_prefix(path, prefix)

@@ -89,7 +89,7 @@ module Barista
       # Expand the path from the framework.
       origin_path, framework = Framework.full_path_for(file)
       return if origin_path.blank?
-      destination_path = self.output_path_for(file)
+      destination_path = framework.output_path_for(file)
       return unless force || Compiler.dirty?(origin_path, destination_path)
       debug "Compiling #{file} from framework '#{framework.name}'"
       FileUtils.mkdir_p File.dirname(destination_path)
@@ -102,7 +102,9 @@ module Barista
         File.open(destination_path, "w+") { |f| f.write content }
         content
       end
-    rescue SystemCallError
+    rescue SystemCallError => ex
+      puts ex
+      puts ex.backtrace
       debug "An unknown error occured attempting to compile '#{file}'"
       ""
     end
@@ -125,10 +127,6 @@ module Barista
 
     def each_framework(include_default = false)
       Framework.all(include_default).each { |f| yield f if block_given? }
-    end
-
-    def output_path_for(file)
-      output_root.join(file.to_s.gsub(/^\/+/, '')).to_s.gsub(/\.coffee$/, '.js')
     end
 
     def debug(message)
